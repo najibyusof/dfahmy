@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\BookableUnit;
 use App\Models\Guest;
 use App\Models\Building;
 use App\Models\BookingRoomItem;
@@ -250,6 +251,301 @@ class BookingModuleTest extends TestCase
             ->assertSessionHasErrors(['items.0.room_id']);
     }
 
+    public function test_room_booking_blocks_overlapping_group_booking_for_same_dates(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Manager');
+
+        $guest = Guest::factory()->create();
+        $roomA = Room::factory()->create(['code' => 'POOL-A', 'maximum_guests' => 4]);
+        $roomB = Room::factory()->create(['code' => 'POOL-B', 'maximum_guests' => 4]);
+
+        $poolGroup = $this->createBookableUnit('All Pool House Rooms', 'UNIT-POOL-ALL-TEST', 'room_group', 1200, 8, [$roomA, $roomB]);
+
+        $existing = Booking::factory()->create([
+            'booking_status' => 'confirmed',
+            'check_in_date' => '2026-09-10',
+            'check_out_date' => '2026-09-12',
+        ]);
+
+        $existing->bookingRoomItems()->create([
+            'room_id' => $roomA->id,
+            'nightly_rate' => 600,
+            'adults' => 2,
+            'children' => 0,
+            'check_in_date' => '2026-09-10',
+            'check_out_date' => '2026-09-12',
+        ]);
+
+        $this->actingAs($manager)
+            ->from(route('bookings.create'))
+            ->post(route('bookings.store'), [
+                'booking_reference' => 'GROUP-CONFLICT-01',
+                'guest_id' => $guest->id,
+                'check_in_date' => '2026-09-10',
+                'check_out_date' => '2026-09-12',
+                'adults' => 4,
+                'children' => 0,
+                'booking_source' => 'website',
+                'booking_status' => 'pending',
+                'subtotal' => 2400,
+                'discount' => 0,
+                'tax' => 144,
+                'total_amount' => 2544,
+                'items' => [[
+                    'bookable_unit_id' => $poolGroup->id,
+                    'nightly_rate' => 1200,
+                    'adults' => 4,
+                    'children' => 0,
+                    'check_in_date' => '2026-09-10',
+                    'check_out_date' => '2026-09-12',
+                ]],
+            ])
+            ->assertRedirect(route('bookings.create'))
+            ->assertSessionHasErrors(['items.0.bookable_unit_id']);
+    }
+
+    public function test_overlapping_group_bookings_with_shared_rooms_are_blocked(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Manager');
+
+        $guest = Guest::factory()->create();
+        $room1 = Room::factory()->create(['code' => 'MAIN-G1', 'maximum_guests' => 4]);
+        $room2 = Room::factory()->create(['code' => 'MAIN-G2', 'maximum_guests' => 4]);
+        $room3 = Room::factory()->create(['code' => 'MAIN-F1', 'maximum_guests' => 4]);
+
+        $groundFloor = $this->createBookableUnit('Main Ground Floor', 'UNIT-MAIN-GROUND-TEST', 'floor', 1600, 6, [$room1, $room2]);
+        $entireMain = $this->createBookableUnit('Entire Main House', 'UNIT-MAIN-ALL-TEST', 'building', 3000, 10, [$room1, $room2, $room3]);
+
+        $existing = Booking::factory()->create([
+            'booking_status' => 'confirmed',
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-03',
+        ]);
+
+        $existing->bookingRoomItems()->create([
+            'bookable_unit_id' => $groundFloor->id,
+            'bookable_unit_name' => $groundFloor->name,
+            'bookable_unit_code' => $groundFloor->code,
+            'booking_type' => $groundFloor->booking_type,
+            'included_rooms_snapshot' => [
+                ['room_id' => $room1->id, 'room_code' => $room1->code, 'room_name' => $room1->name],
+                ['room_id' => $room2->id, 'room_code' => $room2->code, 'room_name' => $room2->name],
+            ],
+            'room_id' => $room1->id,
+            'nightly_rate' => 1600,
+            'adults' => 4,
+            'children' => 0,
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-03',
+        ]);
+
+        $this->actingAs($manager)
+            ->from(route('bookings.create'))
+            ->post(route('bookings.store'), [
+                'booking_reference' => 'GROUP-CONFLICT-02',
+                'guest_id' => $guest->id,
+                'check_in_date' => '2026-10-01',
+                'check_out_date' => '2026-10-03',
+                'adults' => 6,
+                'children' => 0,
+                'booking_source' => 'website',
+                'booking_status' => 'pending',
+                'subtotal' => 6000,
+                'discount' => 0,
+                'tax' => 360,
+                'total_amount' => 6360,
+                'items' => [[
+                    'bookable_unit_id' => $entireMain->id,
+                    'nightly_rate' => 3000,
+                    'adults' => 6,
+                    'children' => 0,
+                    'check_in_date' => '2026-10-01',
+                    'check_out_date' => '2026-10-03',
+                ]],
+            ])
+            ->assertRedirect(route('bookings.create'))
+            ->assertSessionHasErrors(['items.0.bookable_unit_id']);
+    }
+
+    public function test_whole_resort_booking_blocks_other_units_that_share_any_room(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Manager');
+
+        $guest = Guest::factory()->create();
+        $roomA = Room::factory()->create(['code' => 'RS-A']);
+        $roomB = Room::factory()->create(['code' => 'RS-B']);
+
+        $wholeResort = $this->createBookableUnit('Whole Resort', 'UNIT-RESORT-ALL-TEST', 'whole_resort', 5000, 20, [$roomA, $roomB]);
+        $singleRoom = $this->createBookableUnit('Room A', 'UNIT-ROOM-A-TEST', 'room', 500, 2, [$roomA]);
+
+        $existing = Booking::factory()->create([
+            'booking_status' => 'confirmed',
+            'check_in_date' => '2026-11-20',
+            'check_out_date' => '2026-11-22',
+        ]);
+
+        $existing->bookingRoomItems()->create([
+            'bookable_unit_id' => $wholeResort->id,
+            'bookable_unit_name' => $wholeResort->name,
+            'bookable_unit_code' => $wholeResort->code,
+            'booking_type' => $wholeResort->booking_type,
+            'included_rooms_snapshot' => [
+                ['room_id' => $roomA->id, 'room_code' => $roomA->code, 'room_name' => $roomA->name],
+                ['room_id' => $roomB->id, 'room_code' => $roomB->code, 'room_name' => $roomB->name],
+            ],
+            'room_id' => $roomA->id,
+            'nightly_rate' => 5000,
+            'adults' => 10,
+            'children' => 0,
+            'check_in_date' => '2026-11-20',
+            'check_out_date' => '2026-11-22',
+        ]);
+
+        $this->actingAs($manager)
+            ->from(route('bookings.create'))
+            ->post(route('bookings.store'), [
+                'booking_reference' => 'RESORT-CONFLICT-01',
+                'guest_id' => $guest->id,
+                'check_in_date' => '2026-11-20',
+                'check_out_date' => '2026-11-22',
+                'adults' => 2,
+                'children' => 0,
+                'booking_source' => 'website',
+                'booking_status' => 'pending',
+                'subtotal' => 1000,
+                'discount' => 0,
+                'tax' => 60,
+                'total_amount' => 1060,
+                'items' => [[
+                    'bookable_unit_id' => $singleRoom->id,
+                    'nightly_rate' => 500,
+                    'adults' => 2,
+                    'children' => 0,
+                    'check_in_date' => '2026-11-20',
+                    'check_out_date' => '2026-11-22',
+                ]],
+            ])
+            ->assertRedirect(route('bookings.create'))
+            ->assertSessionHasErrors(['items.0.bookable_unit_id']);
+    }
+
+    public function test_cancelled_booking_does_not_block_bookable_unit_availability(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Manager');
+
+        $guest = Guest::factory()->create();
+        $roomA = Room::factory()->create(['code' => 'CNL-A']);
+        $roomB = Room::factory()->create(['code' => 'CNL-B']);
+        $poolGroup = $this->createBookableUnit('Pool Group', 'UNIT-CANCELLED-GROUP-TEST', 'room_group', 1200, 6, [$roomA, $roomB]);
+
+        $cancelled = Booking::factory()->create([
+            'booking_status' => 'cancelled',
+            'check_in_date' => '2026-09-05',
+            'check_out_date' => '2026-09-07',
+        ]);
+
+        $cancelled->bookingRoomItems()->create([
+            'bookable_unit_id' => $poolGroup->id,
+            'bookable_unit_name' => $poolGroup->name,
+            'bookable_unit_code' => $poolGroup->code,
+            'booking_type' => $poolGroup->booking_type,
+            'included_rooms_snapshot' => [
+                ['room_id' => $roomA->id, 'room_code' => $roomA->code, 'room_name' => $roomA->name],
+                ['room_id' => $roomB->id, 'room_code' => $roomB->code, 'room_name' => $roomB->name],
+            ],
+            'room_id' => $roomA->id,
+            'nightly_rate' => 1200,
+            'adults' => 4,
+            'children' => 0,
+            'check_in_date' => '2026-09-05',
+            'check_out_date' => '2026-09-07',
+        ]);
+
+        $this->actingAs($manager)
+            ->post(route('bookings.store'), [
+                'booking_reference' => 'CANCELLED-DOES-NOT-BLOCK',
+                'guest_id' => $guest->id,
+                'check_in_date' => '2026-09-05',
+                'check_out_date' => '2026-09-07',
+                'adults' => 4,
+                'children' => 0,
+                'booking_source' => 'website',
+                'booking_status' => 'pending',
+                'subtotal' => 2400,
+                'discount' => 0,
+                'tax' => 144,
+                'total_amount' => 2544,
+                'items' => [[
+                    'bookable_unit_id' => $poolGroup->id,
+                    'nightly_rate' => 1200,
+                    'adults' => 4,
+                    'children' => 0,
+                    'check_in_date' => '2026-09-05',
+                    'check_out_date' => '2026-09-07',
+                ]],
+            ])
+            ->assertRedirect(route('bookings.index'));
+    }
+
+    public function test_bookable_unit_price_and_room_snapshot_remain_unchanged_after_source_updates(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Manager');
+
+        $guest = Guest::factory()->create();
+        $roomA = Room::factory()->create(['code' => 'SNAP-A', 'name' => 'Snap Room A']);
+        $roomB = Room::factory()->create(['code' => 'SNAP-B', 'name' => 'Snap Room B']);
+        $unit = $this->createBookableUnit('Snapshot Unit', 'UNIT-SNAPSHOT-TEST', 'room_group', 1900, 8, [$roomA, $roomB]);
+
+        $this->actingAs($manager)
+            ->post(route('bookings.store'), [
+                'booking_reference' => 'SNAPSHOT-BOOKING-01',
+                'guest_id' => $guest->id,
+                'check_in_date' => '2026-12-10',
+                'check_out_date' => '2026-12-12',
+                'adults' => 4,
+                'children' => 1,
+                'booking_source' => 'website',
+                'booking_status' => 'confirmed',
+                'subtotal' => 3800,
+                'discount' => 0,
+                'tax' => 228,
+                'total_amount' => 4028,
+                'items' => [[
+                    'bookable_unit_id' => $unit->id,
+                    'nightly_rate' => 1900,
+                    'adults' => 4,
+                    'children' => 1,
+                    'check_in_date' => '2026-12-10',
+                    'check_out_date' => '2026-12-12',
+                ]],
+            ])
+            ->assertRedirect(route('bookings.index'));
+
+        $booking = Booking::query()->where('booking_reference', 'SNAPSHOT-BOOKING-01')->firstOrFail();
+        $item = $booking->bookingRoomItems()->firstOrFail();
+
+        $unit->update(['base_nightly_rate' => 2500, 'name' => 'Snapshot Unit Updated']);
+        $roomA->update(['code' => 'SNAP-A-NEW', 'name' => 'Snap Room A Updated']);
+
+        $item->refresh();
+
+        $this->assertSame('Snapshot Unit', $item->bookable_unit_name);
+        $this->assertSame('UNIT-SNAPSHOT-TEST', $item->bookable_unit_code);
+        $this->assertSame('room_group', $item->booking_type);
+        $this->assertEquals(1900.0, (float) $item->nightly_rate);
+
+        $snapshot = $item->included_rooms_snapshot;
+        $this->assertIsArray($snapshot);
+        $this->assertTrue(collect($snapshot)->contains(function (array $room): bool {
+            return ($room['room_code'] ?? null) === 'SNAP-A' && ($room['room_name'] ?? null) === 'Snap Room A';
+        }));
+    }
+
     public function test_cancelled_and_no_show_bookings_do_not_block_availability(): void
     {
         $manager = User::factory()->create();
@@ -455,5 +751,32 @@ class BookingModuleTest extends TestCase
             ->assertDontSee('PAY-UNPAID-001')
             ->assertDontSee('PAY-PAID-001')
             ->assertDontSee('PAY-OVERPAID-001');
+    }
+
+    /**
+     * @param array<int, Room> $rooms
+     */
+    private function createBookableUnit(
+        string $name,
+        string $code,
+        string $type,
+        float $nightlyRate,
+        int $maximumGuests,
+        array $rooms,
+    ): BookableUnit {
+        $unit = BookableUnit::query()->create([
+            'name' => $name,
+            'code' => $code,
+            'description' => null,
+            'booking_type' => $type,
+            'base_nightly_rate' => $nightlyRate,
+            'maximum_guests' => $maximumGuests,
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $unit->rooms()->sync(collect($rooms)->pluck('id')->all());
+
+        return $unit;
     }
 }
