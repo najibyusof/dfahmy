@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
+use App\Models\BookableUnit;
 use App\Models\Building;
 use App\Models\Guest;
 use App\Models\Room;
@@ -174,12 +175,20 @@ class BookingController extends Controller
         $availabilityFilters = $this->availabilityFilters($request);
 
         $bookingService = app(BookingService::class);
+        $availableBookableUnits = $bookingService->searchAvailableBookableUnits($availabilityFilters);
         $availableRooms = $bookingService->searchAvailableRooms($availabilityFilters);
 
         return view('bookings.create', [
             'guests' => Guest::query()->orderBy('full_name')->get(['id', 'full_name', 'email', 'phone_number']),
             'rooms' => $availableRooms,
             'allRooms' => Room::query()->where('is_active', true)->orderBy('code')->get(['id', 'name', 'code']),
+            'bookableUnits' => $availableBookableUnits,
+            'allBookableUnits' => BookableUnit::query()
+                ->with(['rooms:id,name,code'])
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'booking_type', 'base_nightly_rate', 'maximum_guests']),
             'buildings' => Building::query()->orderBy('name')->get(['id', 'name']),
             'statuses' => Booking::STATUSES,
             'sources' => Booking::SOURCES,
@@ -214,7 +223,7 @@ class BookingController extends Controller
     {
         $this->authorize('view', $booking);
 
-        $booking->load(['guest', 'bookingRoomItems.room', 'payments.receivedBy']);
+        $booking->load(['guest', 'bookingRoomItems.room', 'bookingRoomItems.includedRooms', 'payments.receivedBy']);
 
         return view('bookings.show', [
             'booking' => $booking,
@@ -227,6 +236,7 @@ class BookingController extends Controller
 
         $availabilityFilters = $this->availabilityFilters($request, $booking);
         $bookingService = app(BookingService::class);
+        $availableBookableUnits = $bookingService->searchAvailableBookableUnits($availabilityFilters, $booking->id);
         $availableRooms = $bookingService->searchAvailableRooms($availabilityFilters, $booking->id);
 
         return view('bookings.edit', [
@@ -234,6 +244,13 @@ class BookingController extends Controller
             'guests' => Guest::query()->orderBy('full_name')->get(['id', 'full_name', 'email', 'phone_number']),
             'rooms' => $availableRooms,
             'allRooms' => Room::query()->where('is_active', true)->orderBy('code')->get(['id', 'name', 'code']),
+            'bookableUnits' => $availableBookableUnits,
+            'allBookableUnits' => BookableUnit::query()
+                ->with(['rooms:id,name,code'])
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'booking_type', 'base_nightly_rate', 'maximum_guests']),
             'buildings' => Building::query()->orderBy('name')->get(['id', 'name']),
             'statuses' => Booking::STATUSES,
             'sources' => Booking::SOURCES,

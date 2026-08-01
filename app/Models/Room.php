@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -59,6 +60,22 @@ class Room extends Model
     public function housekeepingTasks(): HasMany
     {
         return $this->hasMany(HousekeepingTask::class);
+    }
+
+    /**
+     * @return BelongsToMany<BookableUnit, $this>
+     */
+    public function bookableUnits(): BelongsToMany
+    {
+        return $this->belongsToMany(BookableUnit::class, 'bookable_unit_room')->withTimestamps();
+    }
+
+    /**
+     * @return BelongsToMany<BookingRoomItem, $this>
+     */
+    public function bookingRoomItemsViaSnapshot(): BelongsToMany
+    {
+        return $this->belongsToMany(BookingRoomItem::class, 'booking_room_item_rooms')->withTimestamps();
     }
 
     protected function casts(): array

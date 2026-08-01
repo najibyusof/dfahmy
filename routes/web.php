@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookableUnitController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\HousekeepingTaskController;
 use App\Http\Controllers\ModuleController;
@@ -116,6 +117,8 @@ Route::middleware('auth')->group(function () {
         ->except(['show'])
         ->middleware('permission.access:rooms.manage');
     Route::resource('bookings', BookingController::class)
+        ->middleware('permission.access:bookings.manage');
+    Route::resource('bookable-units', BookableUnitController::class)
         ->middleware('permission.access:bookings.manage');
     Route::get('/bookings/{booking}/invoice', [PaymentController::class, 'invoice'])
         ->middleware('permission.access:payments.manage')
