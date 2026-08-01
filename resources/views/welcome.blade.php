@@ -30,11 +30,11 @@
 
     <div x-data="{ mobileOpen: false }" class="relative">
         <header class="sticky top-0 z-50 border-b border-[#d9cfbe] bg-[#f7f3ea]/95 backdrop-blur">
-            <nav class="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+            <nav class="mx-auto flex h-24 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
                 aria-label="Main">
-                <a href="{{ url('/') }}" class="inline-flex items-center gap-3">
+                <a href="{{ url('/') }}" class="inline-flex items-center rounded-md px-1 py-1">
                     <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
-                        class="h-14 w-auto max-w-[14rem] sm:h-16 sm:max-w-[16rem]">
+                        class="h-auto w-[168px] object-contain sm:w-[200px] lg:w-[220px]">
                 </a>
 
                 <div class="hidden items-center gap-8 text-sm font-medium text-[#2f4f3f] lg:flex">

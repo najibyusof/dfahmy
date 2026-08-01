@@ -21,6 +21,11 @@ class UserPolicy
         return (int) $user->id !== (int) $targetUser->id;
     }
 
+    public function createSystemUser(User $user): bool
+    {
+        return $user->hasRole('Super Admin');
+    }
+
     public function viewRoleMatrix(User $user): bool
     {
         return $user->can('users.manage');

@@ -11,10 +11,21 @@
                 <h3 class="text-lg font-semibold text-slate-900">System Users</h3>
                 <p class="mt-1 text-sm text-slate-600">Assign roles to control access to resort modules.</p>
             </div>
+            @can('createSystemUser', \App\Models\User::class)
+                <a href="{{ route('admin.users.create') }}"
+                    class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                    Add System User
+                </a>
+            @endcan
         </div>
 
         @if (session('status') === 'user-role-updated')
             <p class="mt-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">User role updated successfully.
+            </p>
+        @endif
+
+        @if (session('status') === 'user-created')
+            <p class="mt-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">System user created successfully.
             </p>
         @endif
 

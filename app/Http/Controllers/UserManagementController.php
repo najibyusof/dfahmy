@@ -6,15 +6,20 @@ use App\Actions\AssignUserRoleAction;
 use App\Actions\ExportRoleAssignmentAuditCsvAction;
 use App\Http\Requests\AssignUserRoleRequest;
 use App\Http\Requests\RoleAuditFilterRequest;
+use App\Http\Requests\StoreSystemUserRequest;
 use App\Models\User;
 use App\Services\RoleAssignmentAuditQueryService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
 
 class UserManagementController extends Controller
 {
+    /**
+     * @var array<int, string>
+     */
+    private const MANAGED_ROLES = ['Super Admin', 'Manager', 'Receptionist', 'Housekeeper'];
+
     public function index(RoleAuditFilterRequest $request, RoleAssignmentAuditQueryService $auditQueryService): View
     {
         $this->authorize('viewAny', User::class);
@@ -24,7 +29,7 @@ class UserManagementController extends Controller
 
         return view('admin.users.index', [
             'users' => $users,
-            'roles' => ['Super Admin', 'Manager', 'Receptionist', 'Housekeeper'],
+            'roles' => self::MANAGED_ROLES,
             'auditLogs' => $auditQueryService->query($filters)
                 ->paginate($filters['per_page'])
                 ->withQueryString(),
@@ -43,6 +48,39 @@ class UserManagementController extends Controller
             ],
             'perPageOptions' => [10, 25, 50, 100],
         ]);
+    }
+
+    public function create(): View
+    {
+        $this->authorize('createSystemUser', User::class);
+
+        return view('admin.users.create', [
+            'roles' => self::MANAGED_ROLES,
+        ]);
+    }
+
+    public function store(StoreSystemUserRequest $request): RedirectResponse
+    {
+        $this->authorize('createSystemUser', User::class);
+
+        $validated = $request->validated();
+
+        /** @var User $user */
+        $user = User::query()->create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+        ]);
+
+        $user->forceFill([
+            'email_verified_at' => now(),
+        ])->save();
+
+        $user->syncRoles([$validated['role']]);
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('status', 'user-created');
     }
 
     public function updateRole(AssignUserRoleRequest $request, User $user, AssignUserRoleAction $assignUserRoleAction): RedirectResponse

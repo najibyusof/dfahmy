@@ -210,6 +210,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/users', [UserManagementController::class, 'index'])
         ->middleware('permission.access:users.manage')
         ->name('admin.users.index');
+    Route::get('/admin/users/create', [UserManagementController::class, 'create'])
+        ->middleware('permission.access:users.manage')
+        ->name('admin.users.create');
+    Route::post('/admin/users', [UserManagementController::class, 'store'])
+        ->middleware(['permission.access:users.manage', 'throttle:state-mutations'])
+        ->name('admin.users.store');
     Route::patch('/admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
         ->middleware(['permission.access:users.manage', 'throttle:state-mutations'])
         ->name('admin.users.role.update');

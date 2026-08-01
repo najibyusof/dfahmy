@@ -42,6 +42,57 @@ class UserManagementTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_non_super_admin_cannot_access_add_system_user_page_or_submit(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Manager');
+
+        $payload = [
+            'name' => 'New System User',
+            'email' => 'new.system.user@example.com',
+            'role' => 'Receptionist',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ];
+
+        $this->actingAs($manager)
+            ->get(route('admin.users.create'))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->post(route('admin.users.store'), $payload)
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_can_create_system_user_with_role_assignment(): void
+    {
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('Super Admin');
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSeeText('Add System User');
+
+        $payload = [
+            'name' => 'Reception User',
+            'email' => 'reception.user@example.com',
+            'role' => 'Receptionist',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ];
+
+        $this->actingAs($superAdmin)
+            ->post(route('admin.users.store'), $payload)
+            ->assertRedirect(route('admin.users.index'));
+
+        $createdUser = User::query()->where('email', 'reception.user@example.com')->first();
+
+        $this->assertNotNull($createdUser);
+        $this->assertTrue($createdUser->hasRole('Receptionist'));
+        $this->assertNotNull($createdUser->email_verified_at);
+    }
+
     public function test_super_admin_can_view_user_management_page_and_update_roles(): void
     {
         $superAdmin = User::factory()->create();
