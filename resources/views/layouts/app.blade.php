@@ -67,6 +67,10 @@
                             class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('bookings.*') || request()->routeIs('modules.bookings.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
                             Bookings
                         </a>
+                        <a href="{{ route('bookable-units.index') }}"
+                            class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('bookable-units.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            Bookable Units
+                        </a>
                     @endcan
                     @can('guests.manage')
                         <a href="{{ route('guests.index') }}"
@@ -267,6 +271,10 @@
                         <a href="{{ route('bookings.index') }}"
                             class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('bookings.*') || request()->routeIs('modules.bookings.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
                             Bookings
+                        </a>
+                        <a href="{{ route('bookable-units.index') }}"
+                            class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('bookable-units.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            Bookable Units
                         </a>
                     @endcan
                     @can('guests.manage')

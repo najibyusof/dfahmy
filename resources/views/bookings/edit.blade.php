@@ -4,7 +4,7 @@
     </x-slot>
 
     <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 class="text-sm font-semibold text-slate-900">Room Availability Search</h3>
+        <h3 class="text-sm font-semibold text-slate-900">Bookable Unit Availability Search</h3>
         <form method="GET" action="{{ route('bookings.edit', $booking) }}" class="mt-3 grid gap-3 md:grid-cols-3">
             <div>
                 <label for="availability_check_in" class="block text-xs font-medium text-slate-600">Check In</label>
@@ -58,7 +58,8 @@
             </div>
         </form>
         @if ($availabilitySearched)
-            <p class="mt-3 text-xs text-slate-600">Available rooms found: {{ $rooms->count() }}</p>
+            <p class="mt-3 text-xs text-slate-600">Available bookable units found: {{ $bookableUnits->count() }} |
+                Available rooms found: {{ $rooms->count() }}</p>
         @endif
     </section>
 

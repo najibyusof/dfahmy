@@ -20,7 +20,8 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm print:shadow-none">
         <div class="flex items-start justify-between gap-6 border-b border-slate-200 pb-6">
             <div>
-                <h4 class="text-2xl font-semibold tracking-tight text-slate-900">DFahMy Eco Resort</h4>
+                <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
+                    class="h-12 w-auto max-w-[13rem]">
                 <p class="mt-2 text-sm text-slate-600">Homestay Booking Invoice</p>
                 <p class="text-sm text-slate-600">Issued: {{ now()->format('Y-m-d') }}</p>
             </div>
@@ -54,15 +55,24 @@
             <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th class="px-3 py-2">Room</th>
+                        <th class="px-3 py-2">Bookable Unit</th>
+                        <th class="px-3 py-2">Included Rooms</th>
                         <th class="px-3 py-2">Period</th>
                         <th class="px-3 py-2">Nightly Rate</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
                     @foreach ($booking->bookingRoomItems as $item)
+                        @php
+                            $snapshotRooms = collect($item->included_rooms_snapshot ?? [])
+                                ->map(fn($room) => ($room['room_code'] ?? 'ROOM') . ' - ' . ($room['room_name'] ?? ''))
+                                ->implode(', ');
+                            $fallbackRoom = $item->room ? $item->room->code . ' - ' . $item->room->name : null;
+                        @endphp
                         <tr>
-                            <td class="px-3 py-2">{{ $item->room->code }} - {{ $item->room->name }}</td>
+                            <td class="px-3 py-2">{{ $item->bookable_unit_name ?: ($fallbackRoom ?: '-') }}</td>
+                            <td class="px-3 py-2">{{ $snapshotRooms !== '' ? $snapshotRooms : ($fallbackRoom ?: '-') }}
+                            </td>
                             <td class="px-3 py-2">{{ $item->check_in_date->format('Y-m-d') }} to
                                 {{ $item->check_out_date->format('Y-m-d') }}</td>
                             <td class="px-3 py-2">RM {{ number_format((float) $item->nightly_rate, 2) }}</td>

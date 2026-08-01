@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-slate-900 leading-tight">Operations Health</h2>
+        <div class="flex items-center justify-between gap-3">
+            <h2 class="font-semibold text-xl text-slate-900 leading-tight">Operations Health</h2>
+            <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden" class="h-10 w-auto max-w-[10rem]">
+        </div>
     </x-slot>
 
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

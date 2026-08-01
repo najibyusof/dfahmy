@@ -202,7 +202,7 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-        $payment->load(['booking.guest', 'receivedBy']);
+        $payment->load(['booking.guest', 'booking.bookingRoomItems.room', 'receivedBy']);
 
         return view('payments.receipt', [
             'payment' => $payment,

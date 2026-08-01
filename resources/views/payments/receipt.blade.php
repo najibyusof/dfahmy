@@ -19,7 +19,8 @@
 
     <section class="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm print:shadow-none">
         <div class="border-b border-slate-200 pb-5 text-center">
-            <h4 class="text-2xl font-semibold tracking-tight text-slate-900">DFahMy Eco Resort</h4>
+            <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
+                class="mx-auto h-14 w-auto max-w-[14rem]">
             <p class="mt-2 text-sm text-slate-600">Official Payment Receipt</p>
         </div>
 
@@ -64,6 +65,33 @@
         <div class="mt-6 text-sm">
             <p class="text-slate-500">Notes</p>
             <p class="mt-1 whitespace-pre-line text-slate-800">{{ $payment->notes ?: '-' }}</p>
+        </div>
+
+        <div class="mt-6 overflow-x-auto text-sm">
+            <p class="mb-2 text-slate-500">Booked Units and Included Rooms</p>
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                        <th class="px-3 py-2">Bookable Unit</th>
+                        <th class="px-3 py-2">Included Rooms</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    @foreach ($booking->bookingRoomItems as $item)
+                        @php
+                            $snapshotRooms = collect($item->included_rooms_snapshot ?? [])
+                                ->map(fn($room) => ($room['room_code'] ?? 'ROOM') . ' - ' . ($room['room_name'] ?? ''))
+                                ->implode(', ');
+                            $fallbackRoom = $item->room ? $item->room->code . ' - ' . $item->room->name : null;
+                        @endphp
+                        <tr>
+                            <td class="px-3 py-2">{{ $item->bookable_unit_name ?: ($fallbackRoom ?: '-') }}</td>
+                            <td class="px-3 py-2">{{ $snapshotRooms !== '' ? $snapshotRooms : ($fallbackRoom ?: '-') }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </section>
 </x-app-layout>

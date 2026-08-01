@@ -160,7 +160,8 @@
             <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th class="px-3 py-2">Room</th>
+                        <th class="px-3 py-2">Bookable Unit</th>
+                        <th class="px-3 py-2">Included Rooms</th>
                         <th class="px-3 py-2">Nightly Rate</th>
                         <th class="px-3 py-2">Adults</th>
                         <th class="px-3 py-2">Children</th>
@@ -170,8 +171,16 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
                     @foreach ($booking->bookingRoomItems as $item)
+                        @php
+                            $snapshotRooms = collect($item->included_rooms_snapshot ?? [])
+                                ->map(fn($room) => ($room['room_code'] ?? 'ROOM') . ' - ' . ($room['room_name'] ?? ''))
+                                ->implode(', ');
+                            $fallbackRoom = $item->room ? $item->room->code . ' - ' . $item->room->name : null;
+                        @endphp
                         <tr>
-                            <td class="px-3 py-2">{{ $item->room->code }} - {{ $item->room->name }}</td>
+                            <td class="px-3 py-2">{{ $item->bookable_unit_name ?: ($fallbackRoom ?: '-') }}</td>
+                            <td class="px-3 py-2">{{ $snapshotRooms !== '' ? $snapshotRooms : ($fallbackRoom ?: '-') }}
+                            </td>
                             <td class="px-3 py-2">RM {{ number_format((float) $item->nightly_rate, 2) }}</td>
                             <td class="px-3 py-2">{{ $item->adults }}</td>
                             <td class="px-3 py-2">{{ $item->children }}</td>
