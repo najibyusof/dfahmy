@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             SuperAdminSeeder::class,
             ResortStructureSeeder::class,
+            BookableUnitSeeder::class,
         ]);
     }
 }
