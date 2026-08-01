@@ -8,6 +8,9 @@
         content="DFahMy Eco Resort is a peaceful nature retreat offering elegant stays, warm hospitality, and serene resort experiences.">
     <title>DFahMy Eco Resort | Nature Retreat & Premium Stay</title>
 
+    <link rel="icon" type="image/svg+xml" href="{{ asset('brand/dfahmy-mark.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600;playfair+display:600,700&display=swap"
         rel="stylesheet" />
@@ -30,10 +33,8 @@
             <nav class="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
                 aria-label="Main">
                 <a href="{{ url('/') }}" class="inline-flex items-center gap-3">
-                    <span
-                        class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d2c5ae] bg-[#efe7d9] text-base font-semibold text-[#1f3a2f]">DF</span>
-                    <span class="text-xs tracking-[0.2em] text-[#2b4a3a] sm:text-sm sm:tracking-[0.22em]">DFAHMY ECO
-                        RESORT</span>
+                    <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
+                        class="h-14 w-auto max-w-[14rem] sm:h-16 sm:max-w-[16rem]">
                 </a>
 
                 <div class="hidden items-center gap-8 text-sm font-medium text-[#2f4f3f] lg:flex">

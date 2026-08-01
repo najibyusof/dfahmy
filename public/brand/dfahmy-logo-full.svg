@@ -1,0 +1,36 @@
+<svg viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+    <title>DFahMy Eco Garden logo</title>
+    <rect width="960" height="320" fill="#ffffff" />
+
+    <g transform="translate(480 102)">
+        <circle cx="0" cy="0" r="96" fill="none" stroke="#4b4b4b" stroke-width="3.2" />
+        <circle cx="0" cy="0" r="86" fill="none" stroke="#4b4b4b" stroke-width="2.2" opacity="0.9" />
+
+        <g transform="translate(0 -4)">
+            <g transform="rotate(-28)">
+                <ellipse cx="-29" cy="-24" rx="10" ry="20" fill="#0d665c" transform="rotate(-18)" />
+                <ellipse cx="-44" cy="6" rx="8" ry="17" fill="#18a85f" transform="rotate(18)" />
+                <ellipse cx="-25" cy="36" rx="9" ry="19" fill="#0d665c" transform="rotate(-7)" />
+            </g>
+            <g transform="rotate(34)">
+                <ellipse cx="29" cy="-24" rx="10" ry="20" fill="#18a85f" transform="rotate(18)" />
+                <ellipse cx="44" cy="6" rx="8" ry="17" fill="#0d665c" transform="rotate(-18)" />
+                <ellipse cx="25" cy="36" rx="9" ry="19" fill="#18a85f" transform="rotate(7)" />
+            </g>
+            <ellipse cx="0" cy="-45" rx="9" ry="21" fill="#18a85f" />
+            <ellipse cx="-52" cy="-8" rx="8.5" ry="17" fill="#0d665c" transform="rotate(-56)" />
+            <ellipse cx="52" cy="-8" rx="8.5" ry="17" fill="#0d665c" transform="rotate(56)" />
+        </g>
+
+        <g transform="translate(-48 -22)">
+            <path d="M48 18 18 45v61h60V45L48 18Z" fill="#165f48" />
+            <path d="M48 0 4.8 39.5v0.7h16v52h62.4v-52h16v-0.7L48 0Z" fill="#ffffff" />
+            <path d="M32 58h32v28H32z" fill="#165f48" opacity="0.9" />
+            <path d="M39.5 20.9 48 13.4l8.5 7.5v31.2H39.5V20.9Z" fill="#165f48" opacity="0.35" />
+        </g>
+    </g>
+
+    <text x="480" y="230" text-anchor="middle" font-family="Figtree, Arial, sans-serif" font-size="78" font-weight="600" fill="#4a4a4a" letter-spacing="1.2">D'FahMY</text>
+    <text x="480" y="276" text-anchor="middle" font-family="Figtree, Arial, sans-serif" font-size="64" font-weight="500" fill="#18a85f">ecogarden</text>
+    <text x="480" y="305" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="26" font-style="italic" fill="#4b4b4b">homestay in a garden</text>
+</svg>

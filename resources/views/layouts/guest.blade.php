@@ -10,6 +10,9 @@
 
     <title>{{ config('app.name', 'DFahMy Eco Resort') }}</title>
 
+    <link rel="icon" type="image/svg+xml" href="{{ asset('brand/dfahmy-mark.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600;playfair+display:600,700&display=swap"
@@ -29,9 +32,8 @@
 
             <div class="relative z-10 p-10 xl:p-14">
                 <a href="{{ url('/') }}" class="inline-flex items-center gap-3">
-                    <span
-                        class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d7cfbf]/40 bg-[#f6f1e8]/15 text-base font-semibold text-[#f6f1e8]">DF</span>
-                    <span class="text-sm tracking-[0.22em] text-[#f1e8d7]">DFAHMY ECO RESORT</span>
+                    <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
+                        class="h-14 w-auto max-w-[14rem]">
                 </a>
             </div>
 

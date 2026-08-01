@@ -8,6 +8,9 @@
 
     <title>{{ config('app.name', 'DFahMy Eco Resort') }}</title>
 
+    <link rel="icon" type="image/svg+xml" href="{{ asset('brand/dfahmy-mark.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -34,8 +37,9 @@
             aria-label="Primary">
             <div>
                 <div class="border-b border-slate-200 px-6 py-5">
-                    <a href="{{ route('dashboard') }}" class="text-xl font-semibold tracking-tight text-emerald-700">
-                        DFahMy Eco Resort
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center">
+                        <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
+                            class="h-11 w-auto max-w-[11rem]">
                     </a>
                 </div>
 
@@ -226,8 +230,9 @@
             <div class="absolute inset-0 bg-slate-900/50" @click="sidebarOpen = false"></div>
             <aside class="relative h-full w-72 bg-white shadow-xl">
                 <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-                    <a href="{{ route('dashboard') }}" class="text-xl font-semibold tracking-tight text-emerald-700">
-                        DFahMy Eco Resort
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center">
+                        <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
+                            class="h-11 w-auto max-w-[11rem]">
                     </a>
                     <button @click="sidebarOpen = false" type="button"
                         class="rounded-md p-2 text-slate-700 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
