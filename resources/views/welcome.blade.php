@@ -113,8 +113,9 @@
 
         <main id="main-content">
             <section class="relative min-h-[88vh] overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1800&q=80"
-                    alt="Eco resort surrounded by forest" class="absolute inset-0 h-full w-full object-cover">
+                <img src="{{ asset('brand/dfahmy-resort-hero.jpg') }}"
+                    alt="Aerial view of DFahMy Eco Resort surrounded by forest"
+                    class="absolute inset-0 h-full w-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-b from-[#0e201a]/60 via-[#10241d]/58 to-[#10241d]/68"></div>
 
                 <div class="relative mx-auto flex min-h-[88vh] max-w-7xl items-center px-4 sm:px-6 lg:px-8">
