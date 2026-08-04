@@ -367,7 +367,7 @@
                         <dl class="space-y-4 text-sm text-slate-700">
                             <div>
                                 <dt class="font-semibold text-[#234434]">Phone</dt>
-                                <dd>+60 12-345 6789</dd>
+                                <dd>+60 19-252 1331</dd>
                             </div>
                             <div>
                                 <dt class="font-semibold text-[#234434]">Email</dt>
@@ -375,7 +375,7 @@
                             </div>
                             <div>
                                 <dt class="font-semibold text-[#234434]">Address</dt>
-                                <dd>Lot 88, Bentong Highlands, 28700 Bentong, Pahang</dd>
+                                <dd>Jalan Kelubi, Kuala Pilah, Negeri Sembilan</dd>
                             </div>
                         </dl>
 
@@ -409,9 +409,9 @@
                 <div>
                     <h3 class="text-sm font-semibold text-[#f2e8d5]">Contact</h3>
                     <ul class="mt-3 space-y-2 text-sm text-[#d9cfbe]">
-                        <li>+60 12-345 6789</li>
+                        <li>+60 19-252 1331</li>
                         <li>stay@dfahmyecoresort.com</li>
-                        <li>Bentong Highlands, Pahang</li>
+                        <li>Kuala Pilah, Negeri Sembilan</li>
                     </ul>
                 </div>
 
