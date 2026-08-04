@@ -7,10 +7,13 @@ use App\Models\Booking;
 use App\Models\OperationAlertSetting;
 use App\Models\User;
 use App\Services\TelegramAlertService;
+use App\Services\TelegramBotService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -44,6 +47,50 @@ class TelegramAlertInfrastructureTest extends TestCase
             return str_contains($request->url(), '/bottest-bot-token/sendMessage')
                 && $request['chat_id'] === '123456'
                 && $request['parse_mode'] === 'Markdown';
+        });
+    }
+
+    public function test_telegram_service_logs_connection_or_ssl_failures_clearly(): void
+    {
+        Log::spy();
+
+        Http::fake(function (): never {
+            throw new ConnectionException('cURL error 60: SSL certificate problem');
+        });
+
+        $sent = app(TelegramBotService::class)->sendMessage('*Hello from test*');
+
+        $this->assertFalse($sent);
+
+        Log::shouldHaveReceived('warning')->once()->withArgs(function (string $message, array $context): bool {
+            return $message === 'Telegram delivery failed due to a connection or SSL error.'
+                && ($context['channel'] ?? null) === 'telegram'
+                && ($context['exception_class'] ?? null) === ConnectionException::class
+                && str_contains((string) ($context['message'] ?? ''), 'SSL certificate problem');
+        });
+    }
+
+    public function test_telegram_service_logs_api_failure_response_body(): void
+    {
+        Log::spy();
+
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response([
+                'ok' => false,
+                'error_code' => 403,
+                'description' => "Forbidden: the bot can't send messages to the bot",
+            ], 403),
+        ]);
+
+        $sent = app(TelegramBotService::class)->sendMessage('*Hello from test*');
+
+        $this->assertFalse($sent);
+
+        Log::shouldHaveReceived('warning')->once()->withArgs(function (string $message, array $context): bool {
+            return $message === 'Telegram API responded with failure status.'
+                && ($context['channel'] ?? null) === 'telegram'
+                && ($context['status'] ?? null) === 403
+                && str_contains((string) ($context['response_body'] ?? ''), "the bot can't send messages to the bot");
         });
     }
 
@@ -85,7 +132,11 @@ class TelegramAlertInfrastructureTest extends TestCase
         $this->actingAs($superAdmin)
             ->get(route('admin.telegram-alert-settings.index'))
             ->assertOk()
-            ->assertSee('Telegram Alert Settings');
+            ->assertSee('Telegram Alert Settings')
+            ->assertSee('Admin setup guide')
+            ->assertSee('TELEGRAM_BOT_TOKEN')
+            ->assertSee('TELEGRAM_CHAT_ID')
+            ->assertSee('HEALTH_CHECK_TOKEN');
 
         $payload = [
             'telegram_new_booking' => 1,

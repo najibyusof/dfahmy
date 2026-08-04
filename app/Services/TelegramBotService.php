@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -28,14 +29,24 @@ class TelegramBotService
         $token = (string) config('services.telegram.bot_token');
         $chatId = (string) config('services.telegram.chat_id');
 
-        $response = Http::retry(3, 200, throw: false)
-            ->asForm()
-            ->post('https://api.telegram.org/bot' . $token . '/sendMessage', [
-                'chat_id' => $chatId,
-                'text' => $message,
-                'parse_mode' => 'Markdown',
-                'disable_web_page_preview' => true,
+        try {
+            $response = Http::retry(3, 200, throw: false)
+                ->asForm()
+                ->post('https://api.telegram.org/bot' . $token . '/sendMessage', [
+                    'chat_id' => $chatId,
+                    'text' => $message,
+                    'parse_mode' => 'Markdown',
+                    'disable_web_page_preview' => true,
+                ]);
+        } catch (ConnectionException $exception) {
+            Log::warning('Telegram delivery failed due to a connection or SSL error.', [
+                'channel' => 'telegram',
+                'exception_class' => $exception::class,
+                'message' => $exception->getMessage(),
             ]);
+
+            return false;
+        }
 
         if ($response->successful()) {
             return true;
@@ -44,6 +55,7 @@ class TelegramBotService
         Log::warning('Telegram API responded with failure status.', [
             'channel' => 'telegram',
             'status' => $response->status(),
+            'response_body' => $response->body(),
         ]);
 
         return false;

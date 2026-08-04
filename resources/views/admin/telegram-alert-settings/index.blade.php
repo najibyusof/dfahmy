@@ -7,6 +7,32 @@
         <p class="text-sm text-slate-600">Enable or disable each Telegram alert type for homestay operations. Bot token
             and chat ID stay in environment variables only.</p>
 
+        <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <h3 class="text-sm font-semibold text-amber-900">Admin setup guide</h3>
+            <ol class="mt-3 space-y-3 pl-5 text-sm text-amber-950 list-decimal">
+                <li>Open Telegram and search for <span class="font-semibold">@BotFather</span>.</li>
+                <li>Create a bot with <span class="font-semibold">/newbot</span>, follow the prompts, and copy the bot
+                    token that BotFather returns.</li>
+                <li>Save that token in your server <span class="font-semibold">.env</span> file as <span
+                        class="font-semibold">TELEGRAM_BOT_TOKEN=your_bot_token</span>.</li>
+                <li>Start a chat with your bot, or add it to the group that should receive alerts, then send at least
+                    one message such as <span class="font-semibold">/start</span>.</li>
+                <li>Get the chat ID by opening <span
+                        class="font-semibold">https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/getUpdates</span> in
+                    your browser and copy the <span class="font-semibold">chat.id</span> value from the latest message
+                    in the target private chat or group.</li>
+                <li>Save that value in <span class="font-semibold">.env</span> as <span
+                        class="font-semibold">TELEGRAM_CHAT_ID=your_chat_id</span>. Do not use the bot's own ID, because
+                    Telegram will reject messages sent to the bot itself.</li>
+                <li>Create a long random secret for health checks and save it as <span
+                        class="font-semibold">HEALTH_CHECK_TOKEN=your_random_secret</span> in <span
+                        class="font-semibold">.env</span>.</li>
+                <li>After updating <span class="font-semibold">.env</span>, refresh configuration on the server with
+                    <span class="font-semibold">php artisan optimize:clear</span> and use <span
+                        class="font-semibold">Send Test Telegram</span> on this page to confirm delivery.</li>
+            </ol>
+        </div>
+
         @if (session('status') === 'telegram-alert-settings-saved')
             <p class="mt-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">Telegram alert settings saved.
             </p>

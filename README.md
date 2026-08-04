@@ -50,8 +50,8 @@ php artisan key:generate
 - Mail (`MAIL_*`)
 - Telegram (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)
 - Session cookie security in production:
-	- `SESSION_SECURE_COOKIE=true`
-	- `SESSION_SAME_SITE=lax`
+    - `SESSION_SECURE_COOKIE=true`
+    - `SESSION_SAME_SITE=lax`
 
 4. Database migrate + seed:
 
@@ -84,6 +84,49 @@ Use `.env.example` as the canonical reference. Key groups:
 - Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
 - Health probes: `HEALTH_CHECK_TOKEN`
 - Bootstrap admin user: `SUPER_ADMIN_NAME`, `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`
+
+## Telegram Alert Setup
+
+Use this when configuring Telegram alerts for admins on `/admin/telegram-alert-settings`.
+
+1. Open Telegram and search for `@BotFather`.
+2. Run `/newbot`, complete the bot name and username prompts, then copy the bot token returned by BotFather.
+3. Save the token in `.env`:
+
+```bash
+TELEGRAM_BOT_TOKEN=your_bot_token
+```
+
+4. Open a direct chat with the bot, or add the bot to the target Telegram group.
+5. Send at least one message to that chat, for example `/start`, so Telegram creates an update record.
+6. Get the chat ID by opening the following URL in a browser, replacing `<YOUR_BOT_TOKEN>` with the real token:
+
+```text
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+```
+
+7. Find the latest message in the JSON response and copy `chat.id` from the target private chat or group.
+8. Save the chat ID in `.env`:
+
+```bash
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+Do not use the bot's own Telegram ID. Telegram will reject sends to the bot itself with `403 Forbidden: the bot can't send messages to the bot`.
+
+9. Generate a long random secret for operational health endpoints and save it in `.env`:
+
+```bash
+HEALTH_CHECK_TOKEN=your_random_secret
+```
+
+10. After editing `.env`, reload Laravel configuration:
+
+```bash
+php artisan optimize:clear
+```
+
+11. Open `/admin/telegram-alert-settings` and use `Send Test Telegram` to confirm the bot can deliver messages.
 
 ## Database Commands
 
@@ -153,11 +196,11 @@ Public/system health endpoints:
 - `/healthz`: unauthenticated basic liveness probe
 - `/readyz`: unauthenticated readiness probe (DB + queue tables)
 - `/healthz/ops`: token-protected operational probe
-	- pass header `X-Health-Token: <HEALTH_CHECK_TOKEN>`
-	- returns queue and scheduler metrics
+    - pass header `X-Health-Token: <HEALTH_CHECK_TOKEN>`
+    - returns queue and scheduler metrics
 - `/readyz/ops`: token-protected readiness metrics probe
-	- pass header `X-Health-Token: <HEALTH_CHECK_TOKEN>`
-	- returns per-dependency readiness (`database`, `jobs_table`, `failed_jobs_table`) and `latency_ms`
+    - pass header `X-Health-Token: <HEALTH_CHECK_TOKEN>`
+    - returns per-dependency readiness (`database`, `jobs_table`, `failed_jobs_table`) and `latency_ms`
 
 Monitoring curl examples:
 
@@ -220,11 +263,13 @@ php artisan test --filter=TelegramAlertInfrastructureTest
 ## Deployment Checklist
 
 1. Set production environment:
+
 - `APP_ENV=production`
 - `APP_DEBUG=false`
 - `APP_KEY` set
 
 2. Set secure secrets:
+
 - DB credentials
 - Mail credentials
 - Telegram token/chat id
@@ -251,6 +296,7 @@ php artisan migrate --force
 7. Verify filesystem permissions for `storage` and `bootstrap/cache`.
 
 8. Validate health endpoints and core flows:
+
 - Login/logout
 - Booking create/check-in/check-out
 - Payment create/refund/void
@@ -260,8 +306,8 @@ php artisan migrate --force
 
 9. Observe logs after deployment for queue failures and notification delivery issues.
 10. Verify operations dashboard updates heartbeat and queue stats:
-	- run `php artisan system:heartbeat`
-	- open `/admin/operations-health`
+    - run `php artisan system:heartbeat`
+    - open `/admin/operations-health`
 
 ## Security Notes
 
