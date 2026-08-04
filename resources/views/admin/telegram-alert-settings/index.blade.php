@@ -4,8 +4,9 @@
     </x-slot>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p class="text-sm text-slate-600">Enable or disable each Telegram alert type for homestay operations. Bot token
-            and chat ID stay in environment variables only.</p>
+        <p class="text-sm text-slate-600">Enable or disable each Telegram alert type for homestay operations. The bot
+            token stays in environment variables, and each internal user adds their own Telegram chat ID on the profile
+            page.</p>
 
         <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
             <h3 class="text-sm font-semibold text-amber-900">Admin setup guide</h3>
@@ -15,21 +16,21 @@
                     token that BotFather returns.</li>
                 <li>Save that token in your server <span class="font-semibold">.env</span> file as <span
                         class="font-semibold">TELEGRAM_BOT_TOKEN=your_bot_token</span>.</li>
-                <li>Start a chat with your bot, or add it to the group that should receive alerts, then send at least
-                    one message such as <span class="font-semibold">/start</span>.</li>
-                <li>Get the chat ID by opening <span
-                        class="font-semibold">https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/getUpdates</span> in
-                    your browser and copy the <span class="font-semibold">chat.id</span> value from the latest message
-                    in the target private chat or group.</li>
-                <li>Save that value in <span class="font-semibold">.env</span> as <span
-                        class="font-semibold">TELEGRAM_CHAT_ID=your_chat_id</span>. Do not use the bot's own ID, because
-                    Telegram will reject messages sent to the bot itself.</li>
+                <li>Ask each internal user who should receive alerts to open their <span
+                        class="font-semibold">Profile</span>
+                    page and save their own Telegram chat ID there.</li>
+                <li>Each user can get their chat ID by sending a message to the bot, then opening <span
+                        class="font-semibold">https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/getUpdates</span> and
+                    copying the matching <span class="font-semibold">chat.id</span> value from their private chat or
+                    target group.</li>
+                <li>Users must not save the bot's own ID. Telegram will reject messages sent to the bot itself.</li>
                 <li>Create a long random secret for health checks and save it as <span
                         class="font-semibold">HEALTH_CHECK_TOKEN=your_random_secret</span> in <span
                         class="font-semibold">.env</span>.</li>
                 <li>After updating <span class="font-semibold">.env</span>, refresh configuration on the server with
                     <span class="font-semibold">php artisan optimize:clear</span> and use <span
-                        class="font-semibold">Send Test Telegram</span> on this page to confirm delivery.</li>
+                        class="font-semibold">Send Test Telegram</span> on this page to confirm delivery.
+                </li>
             </ol>
         </div>
 

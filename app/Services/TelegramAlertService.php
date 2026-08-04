@@ -6,6 +6,7 @@ use App\Jobs\SendTelegramMessageJob;
 use App\Models\Booking;
 use App\Models\HousekeepingTask;
 use App\Models\OperationAlertSetting;
+use App\Models\User;
 
 class TelegramAlertService
 {
@@ -15,6 +16,22 @@ class TelegramAlertService
             '*Telegram Test Alert*' . "\n"
                 . 'Triggered by: ' . $actorName . "\n"
                 . 'Time: ' . now()->format('Y-m-d H:i:s')
+        );
+    }
+
+    public function sendUserTestMessage(User $user): void
+    {
+        $chatId = is_string($user->telegram_chat_id) ? trim($user->telegram_chat_id) : '';
+
+        if ($chatId === '') {
+            return;
+        }
+
+        SendTelegramMessageJob::dispatch(
+            '*Telegram Profile Test*' . "\n"
+                . 'User: ' . $user->name . "\n"
+                . 'Time: ' . now()->format('Y-m-d H:i:s'),
+            $chatId,
         );
     }
 

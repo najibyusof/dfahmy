@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\TelegramBotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -12,7 +13,7 @@ use Illuminate\View\View;
 
 class OperationsHealthController extends Controller
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request, TelegramBotService $telegramBotService): View
     {
         $this->authorize('viewAny', User::class);
 
@@ -43,8 +44,8 @@ class OperationsHealthController extends Controller
         $queueConnection = (string) config('queue.default');
         $queueFailedDriver = (string) config('queue.failed.driver');
         $mailer = (string) config('mail.default');
-        $telegramConfigured = trim((string) config('services.telegram.bot_token')) !== ''
-            && trim((string) config('services.telegram.chat_id')) !== '';
+        $telegramConfigured = $telegramBotService->isConfigured();
+        $telegramRecipientCount = $telegramBotService->recipientCount();
 
         $checks = [
             [
@@ -68,10 +69,12 @@ class OperationsHealthController extends Controller
             ],
             [
                 'name' => 'Telegram integration',
-                'status' => $telegramConfigured ? 'healthy' : 'warning',
-                'details' => $telegramConfigured
-                    ? 'Telegram bot token and chat id are configured.'
-                    : 'Telegram bot token or chat id is missing.',
+                'status' => $telegramConfigured && $telegramRecipientCount > 0 ? 'healthy' : 'warning',
+                'details' => ! $telegramConfigured
+                    ? 'Telegram bot token is missing.'
+                    : ($telegramRecipientCount > 0
+                        ? 'Telegram bot token is configured and ' . $telegramRecipientCount . ' internal user(s) can receive alerts.'
+                        : 'Telegram bot token is configured, but no internal user has added a Telegram chat ID on the profile page.'),
             ],
             [
                 'name' => 'Mail delivery mode',

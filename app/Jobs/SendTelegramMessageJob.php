@@ -21,11 +21,16 @@ class SendTelegramMessageJob implements ShouldQueue
      */
     public array $backoff = [30, 120, 300];
 
-    public function __construct(private readonly string $message) {}
+    public function __construct(
+        public readonly string $message,
+        public readonly ?string $chatId = null,
+    ) {}
 
     public function handle(TelegramBotService $telegramBotService): void
     {
-        $sent = $telegramBotService->sendMessage($this->message);
+        $sent = $this->chatId !== null
+            ? $telegramBotService->sendMessageToChatId($this->message, $this->chatId)
+            : $telegramBotService->sendMessage($this->message);
 
         if (! $sent) {
             Log::warning('Telegram delivery was not successful for queued message.', [

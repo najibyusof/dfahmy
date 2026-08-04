@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\TelegramAlertService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +36,22 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    public function sendTelegramTest(Request $request, TelegramAlertService $telegramAlertService): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! is_string($user?->telegram_chat_id) || trim($user->telegram_chat_id) === '') {
+            return Redirect::route('profile.edit')->with('status', 'telegram-chat-id-required');
+        }
+
+        $telegramAlertService->sendUserTestMessage($user);
+        $user->forceFill([
+            'telegram_test_queued_at' => now(),
+        ])->save();
+
+        return Redirect::route('profile.edit')->with('status', 'profile-telegram-test-queued');
     }
 
     /**

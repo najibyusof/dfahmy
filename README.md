@@ -81,7 +81,7 @@ Use `.env.example` as the canonical reference. Key groups:
 - Queue: `QUEUE_CONNECTION`, `DB_QUEUE_CONNECTION`, `DB_QUEUE_TABLE`, `DB_QUEUE_RETRY_AFTER`
 - Failed jobs: `QUEUE_FAILED_DRIVER`, `QUEUE_FAILED_DATABASE`
 - Mail: `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`
-- Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
+- Telegram: `TELEGRAM_BOT_TOKEN`
 - Health probes: `HEALTH_CHECK_TOKEN`
 - Bootstrap admin user: `SUPER_ADMIN_NAME`, `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`
 
@@ -98,35 +98,32 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 ```
 
 4. Open a direct chat with the bot, or add the bot to the target Telegram group.
-5. Send at least one message to that chat, for example `/start`, so Telegram creates an update record.
-6. Get the chat ID by opening the following URL in a browser, replacing `<YOUR_BOT_TOKEN>` with the real token:
+5. Ask each internal user who should receive alerts to sign in and open `/profile`.
+6. Each user should send at least one message to that chat, for example `/start`, so Telegram creates an update record.
+7. Each user can get the chat ID by opening the following URL in a browser, replacing `<YOUR_BOT_TOKEN>` with the real token:
 
 ```text
 https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
 ```
 
-7. Find the latest message in the JSON response and copy `chat.id` from the target private chat or group.
-8. Save the chat ID in `.env`:
-
-```bash
-TELEGRAM_CHAT_ID=your_chat_id
-```
+8. Find the latest message in the JSON response and copy `chat.id` from the target private chat or group.
+9. Each user should save that value on the profile page in the `Telegram chat ID` field.
 
 Do not use the bot's own Telegram ID. Telegram will reject sends to the bot itself with `403 Forbidden: the bot can't send messages to the bot`.
 
-9. Generate a long random secret for operational health endpoints and save it in `.env`:
+10. Generate a long random secret for operational health endpoints and save it in `.env`:
 
 ```bash
 HEALTH_CHECK_TOKEN=your_random_secret
 ```
 
-10. After editing `.env`, reload Laravel configuration:
+11. After editing `.env`, reload Laravel configuration:
 
 ```bash
 php artisan optimize:clear
 ```
 
-11. Open `/admin/telegram-alert-settings` and use `Send Test Telegram` to confirm the bot can deliver messages.
+12. Open `/admin/telegram-alert-settings` and use `Send Test Telegram` to confirm the bot can deliver messages to all internal users with saved chat IDs.
 
 ## Database Commands
 

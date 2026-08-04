@@ -28,13 +28,28 @@ class TelegramAlertInfrastructureTest extends TestCase
         $this->seed(RoleAndPermissionSeeder::class);
 
         config()->set('services.telegram.bot_token', 'test-bot-token');
-        config()->set('services.telegram.chat_id', '123456');
     }
 
     public function test_telegram_job_sends_http_request_with_retries_using_fake_http(): void
     {
+        $superAdmin = User::factory()->create(['telegram_chat_id' => '111111']);
+        $superAdmin->assignRole('Super Admin');
+
+        $manager = User::factory()->create(['telegram_chat_id' => '222222']);
+        $manager->assignRole('Manager');
+
+        User::factory()->create(['telegram_chat_id' => '333333']);
+
+        $housekeeperWithoutChatId = User::factory()->create(['telegram_chat_id' => null]);
+        $housekeeperWithoutChatId->assignRole('Housekeeper');
+
         Http::fake([
             'https://api.telegram.org/*' => Http::sequence()
+                ->push(['ok' => false], 500)
+                ->push(['ok' => false], 500)
+                ->push(['ok' => true], 200)
+                ->push(['ok' => true], 200)
+                ->push(['ok' => true], 200)
                 ->push(['ok' => false], 500)
                 ->push(['ok' => false], 500)
                 ->push(['ok' => true], 200),
@@ -42,16 +57,27 @@ class TelegramAlertInfrastructureTest extends TestCase
 
         SendTelegramMessageJob::dispatchSync('*Hello from test*');
 
-        Http::assertSentCount(3);
-        Http::assertSent(function (Request $request): bool {
-            return str_contains($request->url(), '/bottest-bot-token/sendMessage')
-                && $request['chat_id'] === '123456'
-                && $request['parse_mode'] === 'Markdown';
+        Http::assertSentCount(4);
+
+        $chatIds = [];
+        Http::assertSent(function (Request $request) use (&$chatIds): bool {
+            if (! str_contains($request->url(), '/bottest-bot-token/sendMessage')) {
+                return false;
+            }
+
+            $chatIds[] = $request['chat_id'];
+
+            return $request['parse_mode'] === 'Markdown';
         });
+
+        $this->assertSame(['111111', '111111', '111111', '222222'], $chatIds);
     }
 
     public function test_telegram_service_logs_connection_or_ssl_failures_clearly(): void
     {
+        $manager = User::factory()->create(['telegram_chat_id' => '123456']);
+        $manager->assignRole('Manager');
+
         Log::spy();
 
         Http::fake(function (): never {
@@ -72,6 +98,9 @@ class TelegramAlertInfrastructureTest extends TestCase
 
     public function test_telegram_service_logs_api_failure_response_body(): void
     {
+        $manager = User::factory()->create(['telegram_chat_id' => '123456']);
+        $manager->assignRole('Manager');
+
         Log::spy();
 
         Http::fake([
@@ -135,7 +164,7 @@ class TelegramAlertInfrastructureTest extends TestCase
             ->assertSee('Telegram Alert Settings')
             ->assertSee('Admin setup guide')
             ->assertSee('TELEGRAM_BOT_TOKEN')
-            ->assertSee('TELEGRAM_CHAT_ID')
+            ->assertSee('Profile')
             ->assertSee('HEALTH_CHECK_TOKEN');
 
         $payload = [
