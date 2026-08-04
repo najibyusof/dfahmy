@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicHealthController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\GuestController;
+use App\Http\Controllers\GuestPortalController;
 use App\Http\Controllers\OperationsHealthController;
 use App\Http\Controllers\RoomBedConfigurationController;
 use App\Http\Controllers\RoomAvailabilityController;
@@ -47,6 +48,14 @@ Route::get('/dashboard', DashboardController::class)
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/my-stays', [GuestPortalController::class, 'index'])->name('guest.portal');
+    Route::post('/my-stays/link-history', [GuestPortalController::class, 'linkHistory'])
+        ->middleware('throttle:state-mutations')
+        ->name('guest.history.link');
+    Route::post('/my-stays/book', [GuestPortalController::class, 'store'])
+        ->middleware('throttle:state-mutations')
+        ->name('guest.bookings.store');
+
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
         ->middleware('throttle:notification-actions')

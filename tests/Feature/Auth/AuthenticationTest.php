@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,9 +18,27 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_guest_users_are_redirected_to_the_booking_contact_after_login(): void
     {
         $user = User::factory()->create();
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('guest.portal'));
+
+        $this->get('/register')->assertRedirect(route('guest.portal'));
+    }
+
+    public function test_staff_users_are_redirected_to_the_dashboard_after_login(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('Receptionist');
 
         $response = $this->post('/login', [
             'email' => $user->email,

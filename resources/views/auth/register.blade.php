@@ -2,8 +2,8 @@
     <header class="mb-6">
         <p class="text-xs uppercase tracking-[0.18em] text-[#6a826f]">Create Account</p>
         <h1 class="mt-2 font-serif text-3xl text-[#1f3a2f]">Start your retreat journey</h1>
-        <p class="mt-2 text-sm leading-7 text-slate-700">Create your guest account to manage reservations and receive
-            important stay updates.</p>
+        <p class="mt-2 text-sm leading-7 text-slate-700">Create your guest account to browse available dates, request
+            a room, and review your bookings.</p>
     </header>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-4">
@@ -23,6 +23,20 @@
             <x-text-input id="email" class="mt-1 block w-full" type="email" name="email" :value="old('email')"
                 required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        </div>
+
+        <div>
+            <x-input-label for="phone_number" :value="__('Phone Number')" />
+            <x-text-input id="phone_number" class="mt-1 block w-full" type="tel" name="phone_number"
+                :value="old('phone_number')" required autocomplete="tel" />
+            <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
+        </div>
+
+        <div>
+            <x-input-label for="identification_number" :value="__('Identification Number')" />
+            <x-text-input id="identification_number" class="mt-1 block w-full" type="text"
+                name="identification_number" :value="old('identification_number')" required />
+            <x-input-error :messages="$errors->get('identification_number')" class="mt-2" />
         </div>
 
         <!-- Password -->

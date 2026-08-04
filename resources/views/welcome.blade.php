@@ -20,7 +20,17 @@
 
 <body class="bg-[#f7f3ea] text-slate-900 antialiased fade-in-soft">
     @php
-        $bookNowUrl = Route::has('register') ? route('register') : (Route::has('login') ? route('login') : url('/'));
+        $canAccessDashboard = auth()->user()?->can('dashboard.view') ?? false;
+        $canManageBookings = auth()->user()?->can('bookings.manage') ?? false;
+        $bookNowUrl = auth()->check()
+            ? ($canManageBookings
+                ? route('bookings.create')
+                : route('guest.portal'))
+            : (Route::has('register')
+                ? route('register')
+                : (Route::has('login')
+                    ? route('login')
+                    : '#contact'));
     @endphp
 
     <a href="#main-content"
@@ -48,10 +58,21 @@
                 <div class="hidden items-center gap-3 lg:flex">
                     @if (Route::has('login'))
                         @auth
-                            <a href="{{ url('/dashboard') }}"
-                                class="rounded-md border border-[#cab89c] px-5 py-2 text-sm font-semibold text-[#214233] transition hover:bg-[#ece2d2]">
-                                Dashboard
-                            </a>
+                            @if ($canAccessDashboard)
+                                <a href="{{ route('dashboard') }}"
+                                    class="rounded-md border border-[#cab89c] px-5 py-2 text-sm font-semibold text-[#214233] transition hover:bg-[#ece2d2]">
+                                    Dashboard
+                                </a>
+                            @else
+                                <a href="{{ route('profile.edit') }}"
+                                    class="rounded-md border border-[#cab89c] px-5 py-2 text-sm font-semibold text-[#214233] transition hover:bg-[#ece2d2]">
+                                    Profile
+                                </a>
+                                <a href="{{ route('guest.portal') }}"
+                                    class="rounded-md bg-[#1f3a2f] px-5 py-2 text-sm font-semibold text-[#f6f1e8] shadow-sm transition hover:bg-[#183027]">
+                                    Book Your Stay
+                                </a>
+                            @endif
                         @else
                             <a href="{{ route('login') }}"
                                 class="rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-[#315241] transition hover:text-[#1f3a2f]">
@@ -96,8 +117,16 @@
 
                     @if (Route::has('login'))
                         @auth
-                            <a href="{{ url('/dashboard') }}"
-                                class="mt-2 block rounded-md border border-[#cdbda3] px-3 py-3 text-center text-[#214233] hover:bg-[#ece3d4] focus-visible:ring-2 focus-visible:ring-[#1f3a2f]">Dashboard</a>
+                            @if ($canAccessDashboard)
+                                <a href="{{ route('dashboard') }}"
+                                    class="mt-2 block rounded-md border border-[#cdbda3] px-3 py-3 text-center text-[#214233] hover:bg-[#ece3d4] focus-visible:ring-2 focus-visible:ring-[#1f3a2f]">Dashboard</a>
+                            @else
+                                <a href="{{ route('profile.edit') }}"
+                                    class="mt-2 block rounded-md border border-[#cdbda3] px-3 py-3 text-center text-[#214233] hover:bg-[#ece3d4] focus-visible:ring-2 focus-visible:ring-[#1f3a2f]">Profile</a>
+                                <a href="{{ route('guest.portal') }}" @click="mobileOpen = false"
+                                    class="mt-2 block rounded-md bg-[#1f3a2f] px-3 py-3 text-center text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-[#1f3a2f]">Book
+                                    Your Stay</a>
+                            @endif
                         @else
                             <a href="{{ route('login') }}"
                                 class="mt-2 block rounded-md border border-[#cdbda3] px-3 py-3 text-center text-[#214233] hover:bg-[#ece3d4] focus-visible:ring-2 focus-visible:ring-[#1f3a2f]">Log
@@ -111,12 +140,20 @@
             </div>
         </header>
 
+        @if (session('status') === 'account-created')
+            <div class="border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-800"
+                role="status">
+                Your account is ready. Contact our team below to arrange your stay.
+            </div>
+        @endif
+
         <main id="main-content">
             <section class="relative min-h-[88vh] overflow-hidden">
                 <img src="{{ asset('brand/dfahmy-resort-hero.jpg') }}"
                     alt="Aerial view of DFahMy Eco Resort surrounded by forest"
                     class="absolute inset-0 h-full w-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-b from-[#0e201a]/60 via-[#10241d]/58 to-[#10241d]/68"></div>
+                <div class="absolute inset-0 bg-gradient-to-b from-[#0e201a]/60 via-[#10241d]/58 to-[#10241d]/68">
+                </div>
 
                 <div class="relative mx-auto flex min-h-[88vh] max-w-7xl items-center px-4 sm:px-6 lg:px-8">
                     <div class="max-w-2xl text-[#f6f1e8] rise-in-soft">

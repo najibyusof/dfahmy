@@ -6,10 +6,12 @@ use Database\Factories\GuestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 
 #[Fillable([
+    'user_id',
     'full_name',
     'email',
     'phone_number',
@@ -22,6 +24,14 @@ use Illuminate\Notifications\Notifiable;
 ])]
 class Guest extends Model
 {
+        /**
+         * @return BelongsTo<User, $this>
+         */
+        public function user(): BelongsTo
+        {
+            return $this->belongsTo(User::class);
+        }
+
     /** @use HasFactory<GuestFactory> */
     use HasFactory, Notifiable;
 

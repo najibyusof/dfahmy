@@ -14,7 +14,7 @@ class AuditLogService
     public function record(string $action, Model $subject, ?array $oldValues = null, ?array $newValues = null): void
     {
         AuditLog::query()->create([
-            'user_id' => auth()->id(),
+            'user_id' => auth()->user()?->id,
             'action' => $action,
             'subject_type' => $subject::class,
             'subject_id' => (int) $subject->getKey(),

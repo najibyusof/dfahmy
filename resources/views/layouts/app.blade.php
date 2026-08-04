@@ -27,6 +27,7 @@
 
 <body class="font-sans antialiased bg-slate-100 text-slate-900">
     @php($unreadNotificationCount = auth()->user()?->unreadNotifications()->count() ?? 0)
+    @php($canAccessDashboard = auth()->user()?->can('dashboard.view') ?? false)
     <a href="#main-content"
         class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-emerald-700 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">
         Skip to main content
@@ -37,17 +38,29 @@
             aria-label="Primary">
             <div>
                 <div class="border-b border-slate-200 px-6 py-5">
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center">
+                    <a href="{{ $canAccessDashboard ? route('dashboard') : route('guest.portal') }}"
+                        class="inline-flex items-center">
                         <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
                             class="h-11 w-auto max-w-[11rem]">
                     </a>
                 </div>
 
                 <nav class="space-y-2 px-4 py-6 text-sm font-medium" aria-label="Main navigation">
-                    <a href="{{ route('dashboard') }}"
-                        class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('dashboard') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                        Dashboard
-                    </a>
+                    @if ($canAccessDashboard)
+                        <a href="{{ route('dashboard') }}"
+                            class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('dashboard') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            Dashboard
+                        </a>
+                    @else
+                        <a href="{{ route('guest.portal') }}"
+                            class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('guest.portal') && !request()->has('history') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            Book a Stay
+                        </a>
+                        <a href="{{ route('guest.portal') }}#my-bookings"
+                            class="block rounded-lg px-4 py-2.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                            My Bookings
+                        </a>
+                    @endif
                     @can('rooms.manage')
                         <a href="{{ route('buildings.index') }}"
                             class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('buildings.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
@@ -234,7 +247,8 @@
             <div class="absolute inset-0 bg-slate-900/50" @click="sidebarOpen = false"></div>
             <aside class="relative h-full w-72 bg-white shadow-xl">
                 <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center">
+                    <a href="{{ $canAccessDashboard ? route('dashboard') : route('guest.portal') }}"
+                        class="inline-flex items-center">
                         <img src="{{ asset('brand/dfahmy-logo-full.svg') }}" alt="D'FahMY ecogarden"
                             class="h-11 w-auto max-w-[11rem]">
                     </a>
@@ -249,10 +263,21 @@
                 </div>
 
                 <nav class="space-y-2 px-4 py-6 text-sm font-medium" aria-label="Mobile navigation">
-                    <a href="{{ route('dashboard') }}"
-                        class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('dashboard') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                        Dashboard
-                    </a>
+                    @if ($canAccessDashboard)
+                        <a href="{{ route('dashboard') }}"
+                            class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('dashboard') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            Dashboard
+                        </a>
+                    @else
+                        <a href="{{ route('guest.portal') }}"
+                            class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('guest.portal') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            Book a Stay
+                        </a>
+                        <a href="{{ route('guest.portal') }}#my-bookings"
+                            class="block rounded-lg px-4 py-2.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                            My Bookings
+                        </a>
+                    @endif
                     @can('rooms.manage')
                         <a href="{{ route('buildings.index') }}"
                             class="block rounded-lg px-4 py-2.5 transition {{ request()->routeIs('buildings.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">

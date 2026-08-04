@@ -609,6 +609,50 @@ class BookingModuleTest extends TestCase
             ->assertSee('New Booking');
     }
 
+    public function test_bookings_index_can_render_filtered_calendar_view_for_a_selected_month(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('Manager');
+
+        Booking::factory()->create([
+            'booking_reference' => 'CAL-OVERLAP-001',
+            'booking_status' => 'confirmed',
+            'check_in_date' => '2026-07-30',
+            'check_out_date' => '2026-08-02',
+        ]);
+        Booking::factory()->create([
+            'booking_reference' => 'CAL-PENDING-001',
+            'booking_status' => 'pending',
+            'check_in_date' => '2026-08-15',
+            'check_out_date' => '2026-08-18',
+        ]);
+        Booking::factory()->create([
+            'booking_reference' => 'CAL-OUTSIDE-001',
+            'booking_status' => 'confirmed',
+            'check_in_date' => '2026-09-10',
+            'check_out_date' => '2026-09-12',
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('bookings.index', [
+                'view' => 'calendar',
+                'month' => '2026-08',
+                'booking_status' => 'confirmed',
+            ]))
+            ->assertOk()
+            ->assertSee('August 2026')
+            ->assertSee('CAL-OVERLAP-001')
+            ->assertDontSee('CAL-PENDING-001')
+            ->assertDontSee('CAL-OUTSIDE-001')
+            ->assertSee('name="view" value="calendar"', false)
+            ->assertSee('name="month" value="2026-08"', false);
+
+        $this->actingAs($manager)
+            ->get(route('bookings.index', ['view' => 'calendar', 'month' => 'invalid']))
+            ->assertOk()
+            ->assertSee(now()->format('F Y'));
+    }
+
     public function test_booking_status_pages_and_actions_work(): void
     {
         $manager = User::factory()->create();

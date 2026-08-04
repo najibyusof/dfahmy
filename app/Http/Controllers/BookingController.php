@@ -14,6 +14,8 @@ use App\Services\GuestEmailNotificationService;
 use App\Services\HousekeepingService;
 use App\Services\InAppNotificationService;
 use App\Services\TelegramAlertService;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -30,6 +32,19 @@ class BookingController extends Controller
             'payment_summary' => (string) $request->string('payment_summary'),
             'quick' => (string) $request->string('quick'),
         ];
+
+        $viewMode = $request->string('view')->toString() === 'calendar' ? 'calendar' : 'list';
+        $requestedMonth = $request->string('month')->toString();
+        $monthValue = $requestedMonth !== '' ? $requestedMonth : now()->format('Y-m');
+        try {
+            $calendarMonth = Carbon::createFromFormat('!Y-m', $monthValue);
+        } catch (\Throwable) {
+            $calendarMonth = null;
+        }
+
+        if ($calendarMonth === null || $calendarMonth === false || $calendarMonth->format('Y-m') !== $monthValue) {
+            $calendarMonth = now()->startOfMonth();
+        }
 
         $today = now()->toDateString();
         $paidTotalExpr = "COALESCE((SELECT SUM(CASE WHEN payments.payment_status = 'paid' THEN payments.amount ELSE 0 END) FROM payments WHERE payments.booking_id = bookings.id), 0)";
@@ -85,7 +100,7 @@ class BookingController extends Controller
                 ->count(),
         ];
 
-        $bookings = Booking::query()
+        $bookingsQuery = Booking::query()
             ->with([
                 'guest:id,full_name,email,phone_number',
                 'bookingRoomItems.room:id,name,code',
@@ -143,10 +158,28 @@ class BookingController extends Controller
             ->when($filters['quick'] === 'partially_paid', function ($query) use ($paidTotalExpr) {
                 $query->whereRaw($paidTotalExpr . ' > 0')
                     ->whereRaw($paidTotalExpr . ' < bookings.total_amount');
-            })
-            ->orderByDesc('check_in_date')
-            ->paginate(10)
-            ->withQueryString();
+            });
+
+        $calendarDays = collect();
+        if ($viewMode === 'calendar') {
+            $calendarStart = $calendarMonth->copy()->startOfMonth();
+            $calendarEnd = $calendarMonth->copy()->endOfMonth();
+            $calendarDays = collect(CarbonPeriod::create(
+                $calendarStart->copy()->startOfWeek(Carbon::MONDAY),
+                $calendarEnd->copy()->endOfWeek(Carbon::SUNDAY)
+            ));
+
+            $bookings = $bookingsQuery
+                ->whereDate('check_in_date', '<=', $calendarEnd)
+                ->whereDate('check_out_date', '>', $calendarStart)
+                ->orderBy('check_in_date')
+                ->get();
+        } else {
+            $bookings = $bookingsQuery
+                ->orderByDesc('check_in_date')
+                ->paginate(10)
+                ->withQueryString();
+        }
 
         $statusBadgeClasses = [
             'inquiry' => 'bg-blue-100 text-blue-800',
@@ -164,6 +197,9 @@ class BookingController extends Controller
             'statuses' => Booking::STATUSES,
             'statusBadgeClasses' => $statusBadgeClasses,
             'quickFilterCounts' => $quickFilterCounts,
+            'viewMode' => $viewMode,
+            'calendarMonth' => $calendarMonth,
+            'calendarDays' => $calendarDays,
         ]);
     }
 

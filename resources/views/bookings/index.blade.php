@@ -6,8 +6,12 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <form method="GET" action="{{ route('bookings.index') }}" class="flex flex-wrap gap-2">
-                <input type="text" name="search" value="{{ $filters['search'] }}" placeholder="Search ref, guest, room"
-                    class="rounded-lg border-slate-300 text-sm">
+                @if ($viewMode === 'calendar')
+                    <input type="hidden" name="view" value="calendar">
+                    <input type="hidden" name="month" value="{{ $calendarMonth->format('Y-m') }}">
+                @endif
+                <input type="text" name="search" value="{{ $filters['search'] }}"
+                    placeholder="Search ref, guest, room" class="rounded-lg border-slate-300 text-sm">
                 <select name="booking_status" class="rounded-lg border-slate-300 text-sm">
                     <option value="">All Statuses</option>
                     @foreach ($statuses as $status)
@@ -24,13 +28,22 @@
                 </select>
                 <button type="submit"
                     class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Filter</button>
-                <a href="{{ route('bookings.index') }}"
+                <a href="{{ route('bookings.index', $viewMode === 'calendar' ? ['view' => 'calendar', 'month' => $calendarMonth->format('Y-m')] : []) }}"
                     class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">Reset</a>
             </form>
 
-            <a href="{{ route('bookings.create') }}"
-                class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">New
-                Booking</a>
+            <div class="flex items-center gap-3">
+                <div class="inline-flex rounded-lg border border-slate-300 p-1 text-xs font-semibold"
+                    aria-label="Booking view">
+                    <a href="{{ route('bookings.index', array_merge(request()->except(['page', 'month']), ['view' => 'list'])) }}"
+                        class="rounded-md px-3 py-1.5 {{ $viewMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">List</a>
+                    <a href="{{ route('bookings.index', array_merge(request()->except('page'), ['view' => 'calendar', 'month' => $calendarMonth->format('Y-m')])) }}"
+                        class="rounded-md px-3 py-1.5 {{ $viewMode === 'calendar' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">Calendar</a>
+                </div>
+                <a href="{{ route('bookings.create') }}"
+                    class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">New
+                    Booking</a>
+            </div>
         </div>
 
         @php($quick = $filters['quick'] ?? '')
@@ -87,26 +100,84 @@
             </p>
         @endif
 
-        <div class="mt-4 overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 text-sm">
-                <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <tr>
-                        <th class="px-4 py-3">Reference</th>
-                        <th class="px-4 py-3">Guest</th>
-                        <th class="px-4 py-3">Rooms</th>
-                        <th class="px-4 py-3">Check In</th>
-                        <th class="px-4 py-3">Check Out</th>
-                        <th class="px-4 py-3">Status</th>
-                        <th class="px-4 py-3">Payment</th>
-                        <th class="px-4 py-3">Amount</th>
-                        <th class="px-4 py-3">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
-                    @forelse ($bookings as $booking)
-                        @php($firstRoom = $booking->bookingRoomItems->first()?->room)
-                        @php($paymentSummaryStatus = $booking->paymentSummaryStatus())
-                        @php(
+        @if ($viewMode === 'calendar')
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+                <h3 class="text-lg font-semibold text-slate-900">{{ $calendarMonth->format('F Y') }}</h3>
+                <div class="flex items-center gap-2 text-xs font-semibold">
+                    <a href="{{ route('bookings.index', array_merge(request()->except('page'), ['view' => 'calendar', 'month' => $calendarMonth->copy()->subMonth()->format('Y-m')])) }}"
+                        class="rounded-lg border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-100">Previous</a>
+                    <a href="{{ route('bookings.index', array_merge(request()->except(['page', 'month']), ['view' => 'calendar'])) }}"
+                        class="rounded-lg border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-100">Today</a>
+                    <a href="{{ route('bookings.index', array_merge(request()->except('page'), ['view' => 'calendar', 'month' => $calendarMonth->copy()->addMonth()->format('Y-m')])) }}"
+                        class="rounded-lg border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-100">Next</a>
+                </div>
+            </div>
+
+            <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+                <div class="min-w-[56rem]">
+                    <div
+                        class="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $weekday)
+                            <div class="px-2 py-3">{{ $weekday }}</div>
+                        @endforeach
+                    </div>
+                    <div class="grid grid-cols-7 bg-slate-200 gap-px">
+                        @foreach ($calendarDays as $day)
+                            @php($dayBookings = $bookings->filter(fn($booking) => $booking->check_in_date->lte($day) && $booking->check_out_date->gt($day)))
+                            <div
+                                class="min-h-36 bg-white p-2 {{ $day->month !== $calendarMonth->month ? 'bg-slate-50 text-slate-400' : '' }}">
+                                <div class="mb-2 flex items-center justify-between">
+                                    <span
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold {{ $day->isToday() ? 'bg-emerald-600 text-white' : '' }}">
+                                        {{ $day->day }}
+                                    </span>
+                                    @if ($dayBookings->isNotEmpty())
+                                        <span class="text-[10px] text-slate-400">{{ $dayBookings->count() }}</span>
+                                    @endif
+                                </div>
+                                <div class="space-y-1.5">
+                                    @foreach ($dayBookings as $booking)
+                                        @php($firstRoom = $booking->bookingRoomItems->first()?->room)
+                                        <a href="{{ route('bookings.show', $booking) }}"
+                                            class="block rounded-md px-2 py-1.5 text-[11px] leading-4 transition hover:opacity-80 {{ $statusBadgeClasses[$booking->booking_status] ?? 'bg-slate-100 text-slate-800' }}">
+                                            <span
+                                                class="block truncate font-semibold">{{ $booking->booking_reference }}</span>
+                                            <span
+                                                class="block truncate opacity-80">{{ $booking->guest->full_name }}</span>
+                                            @if ($firstRoom)
+                                                <span class="block truncate opacity-70">{{ $firstRoom->code }}</span>
+                                            @endif
+                                            <span
+                                                class="block truncate capitalize opacity-70">{{ str_replace('_', ' ', $booking->booking_status) }}</span>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="mt-4 overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                        <tr>
+                            <th class="px-4 py-3">Reference</th>
+                            <th class="px-4 py-3">Guest</th>
+                            <th class="px-4 py-3">Rooms</th>
+                            <th class="px-4 py-3">Check In</th>
+                            <th class="px-4 py-3">Check Out</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Payment</th>
+                            <th class="px-4 py-3">Amount</th>
+                            <th class="px-4 py-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        @forelse ($bookings as $booking)
+                            @php($firstRoom = $booking->bookingRoomItems->first()?->room)
+                            @php($paymentSummaryStatus = $booking->paymentSummaryStatus())
+                            @php(
     $paymentSummaryStatusClasses = [
         'unpaid' => 'border border-rose-200 bg-rose-50 text-rose-700',
         'partially_paid' => 'border border-amber-200 bg-amber-50 text-amber-700',
@@ -114,7 +185,7 @@
         'overpaid' => 'border border-blue-200 bg-blue-50 text-blue-700'
     ]
 )
-                        @php(
+                            @php(
     $paymentSummaryActiveRingClasses = [
         'unpaid' => 'ring-1 ring-rose-300',
         'partially_paid' => 'ring-1 ring-amber-300',
@@ -122,56 +193,59 @@
         'overpaid' => 'ring-1 ring-blue-300'
     ]
 )
-                        <tr>
-                            <td class="px-4 py-3 font-medium text-slate-900">{{ $booking->booking_reference }}</td>
-                            <td class="px-4 py-3">{{ $booking->guest->full_name }}</td>
-                            <td class="px-4 py-3">
-                                {{ $booking->bookingRoomItems->count() }} room(s)
-                                @if ($firstRoom)
-                                    <span class="text-xs text-slate-500">· {{ $firstRoom->code }}</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">{{ $booking->check_in_date->format('Y-m-d') }}</td>
-                            <td class="px-4 py-3">{{ $booking->check_out_date->format('Y-m-d') }}</td>
-                            <td class="px-4 py-3">
-                                <span
-                                    class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusBadgeClasses[$booking->booking_status] ?? 'bg-slate-100 text-slate-800' }}">
-                                    {{ str_replace('_', ' ', $booking->booking_status) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <a href="{{ route('bookings.index', array_merge(request()->except('page'), ['payment_summary' => $paymentSummaryStatus])) }}"
-                                    class="rounded-full px-2.5 py-1 text-xs font-semibold transition {{ $paymentSummaryStatusClasses[$paymentSummaryStatus] ?? 'border border-slate-200 bg-slate-50 text-slate-700' }} {{ ($filters['payment_summary'] ?? '') === $paymentSummaryStatus ? $paymentSummaryActiveRingClasses[$paymentSummaryStatus] ?? 'ring-1 ring-slate-300' : 'hover:opacity-90' }}">
-                                    {{ str_replace('_', ' ', $paymentSummaryStatus) }}
-                                </a>
-                            </td>
-                            <td class="px-4 py-3">RM {{ number_format((float) $booking->total_amount, 2) }}</td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <a href="{{ route('bookings.show', $booking) }}"
-                                        class="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">View</a>
-                                    <a href="{{ route('bookings.edit', $booking) }}"
-                                        class="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Edit</a>
-                                    <a href="{{ route('bookings.cancel.page', $booking) }}"
-                                        class="rounded-lg border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-50">Cancel</a>
-                                    <a href="{{ route('bookings.check-in.page', $booking) }}"
-                                        class="rounded-lg border border-emerald-300 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50">Check
-                                        In</a>
-                                    <a href="{{ route('bookings.check-out.page', $booking) }}"
-                                        class="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Check
-                                        Out</a>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="9" class="px-4 py-6 text-center text-slate-500">No bookings found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                            <tr>
+                                <td class="px-4 py-3 font-medium text-slate-900">{{ $booking->booking_reference }}
+                                </td>
+                                <td class="px-4 py-3">{{ $booking->guest->full_name }}</td>
+                                <td class="px-4 py-3">
+                                    {{ $booking->bookingRoomItems->count() }} room(s)
+                                    @if ($firstRoom)
+                                        <span class="text-xs text-slate-500">· {{ $firstRoom->code }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">{{ $booking->check_in_date->format('Y-m-d') }}</td>
+                                <td class="px-4 py-3">{{ $booking->check_out_date->format('Y-m-d') }}</td>
+                                <td class="px-4 py-3">
+                                    <span
+                                        class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusBadgeClasses[$booking->booking_status] ?? 'bg-slate-100 text-slate-800' }}">
+                                        {{ str_replace('_', ' ', $booking->booking_status) }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('bookings.index', array_merge(request()->except('page'), ['payment_summary' => $paymentSummaryStatus])) }}"
+                                        class="rounded-full px-2.5 py-1 text-xs font-semibold transition {{ $paymentSummaryStatusClasses[$paymentSummaryStatus] ?? 'border border-slate-200 bg-slate-50 text-slate-700' }} {{ ($filters['payment_summary'] ?? '') === $paymentSummaryStatus ? $paymentSummaryActiveRingClasses[$paymentSummaryStatus] ?? 'ring-1 ring-slate-300' : 'hover:opacity-90' }}">
+                                        {{ str_replace('_', ' ', $paymentSummaryStatus) }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3">RM {{ number_format((float) $booking->total_amount, 2) }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <a href="{{ route('bookings.show', $booking) }}"
+                                            class="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">View</a>
+                                        <a href="{{ route('bookings.edit', $booking) }}"
+                                            class="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Edit</a>
+                                        <a href="{{ route('bookings.cancel.page', $booking) }}"
+                                            class="rounded-lg border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-50">Cancel</a>
+                                        <a href="{{ route('bookings.check-in.page', $booking) }}"
+                                            class="rounded-lg border border-emerald-300 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50">Check
+                                            In</a>
+                                        <a href="{{ route('bookings.check-out.page', $booking) }}"
+                                            class="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Check
+                                            Out</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="px-4 py-6 text-center text-slate-500">No bookings found.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-        <div class="mt-4">{{ $bookings->links() }}</div>
+            <div class="mt-4">{{ $bookings->links() }}</div>
+        @endif
     </section>
 </x-app-layout>
